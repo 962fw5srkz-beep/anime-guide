@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>دليل الأنمي</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#101014;color:white;direction:rtl;padding-bottom:30px}
+h1{background:#e50914;margin:0;padding:18px;text-align:center;font-size:30px}
+#searchBox{display:block;width:85%;max-width:540px;margin:18px auto;padding:13px 15px;border:none;border-radius:14px;background:#252532;color:white;font-size:17px;outline:none;text-align:right}
+.top-actions,.category-buttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:13px auto;padding:0 10px}
+.top-actions button,.category-buttons button,#loadMoreBtn,#autoLoadBtn{background:#252532;color:white;border:1px solid #e50914;padding:8px 13px;border-radius:20px;font-size:14px}
+.top-actions button.active,.category-buttons button.active{background:#e50914}
+.section-title{text-align:center;background:#1c1c26;border:1px solid #e50914;border-radius:16px;margin:12px auto;padding:10px;max-width:520px;color:#fff}
+.welcome{text-align:center;font-size:16px;margin:15px auto;color:#ddd;padding:0 12px;line-height:1.7}
+#statusLine,#selectedLine{text-align:center;color:#ffd54a;margin:8px 10px;font-size:14px}
+#animeList{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;padding:15px;max-width:950px;margin:0 auto}
+.anime-card{background:#1c1c26;padding:12px;border-radius:16px;text-align:center;position:relative}
+.anime-img{width:100%;height:260px;object-fit:cover;border-radius:13px;background:#252532;cursor:pointer}
+.poster-fallback{width:100%;height:260px;border-radius:13px;background:linear-gradient(135deg,#e50914,#252532);display:none;align-items:center;justify-content:center;text-align:center;font-size:24px;font-weight:bold;padding:8px;box-sizing:border-box;cursor:pointer}
+.anime-card h2{margin:10px 0 5px;color:white;font-size:21px}
+.anime-card p{margin:7px 0;color:#ddd;font-size:15px}
+.anime-card button{background:#e50914;color:white;border:none;padding:9px 12px;border-radius:10px;font-size:14px;margin:5px}
+.floating-buttons{position:absolute;top:16px;left:16px;display:flex;gap:6px;flex-direction:column;z-index:2}
+.small-round{background:rgba(0,0,0,.65)!important;border-radius:50%!important;width:40px;height:40px;padding:0!important;font-size:20px!important}
+.small-round.active{background:#e50914!important}
+.stats-line{color:#aaa!important;font-size:13px!important}
+.season-line{background:#252532;border-radius:10px;padding:8px;color:#fff!important;font-size:14px!important;margin-top:8px}
+.countdown-line{background:#252532;border-radius:10px;padding:8px;color:#fff!important;font-size:14px!important;margin-top:8px}
+.rating-line{color:#ffd54a!important;font-size:15px!important}
+.load-wrap{text-align:center;margin:15px}
+#loadMoreBtn,#autoLoadBtn{background:#e50914;border:none;border-radius:12px;padding:12px 18px;margin:5px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;z-index:999;padding:15px}
+.hidden{display:none}
+.modal-content{background:#1c1c26;color:white;width:90%;max-width:470px;border-radius:18px;padding:18px;text-align:center;position:relative;max-height:90vh;overflow-y:auto}
+.modal-content img{width:100%;max-height:260px;object-fit:cover;border-radius:14px;background:#252532}
+.modal-content p{font-size:16px;line-height:1.7}
+.close-btn{position:absolute;top:8px;left:8px;background:#e50914;color:white;border:none;width:34px;height:34px;border-radius:50%;font-size:24px}
+.watch-link{display:block;background:#e50914;color:white;text-decoration:none;padding:12px;border-radius:12px;margin:10px 0;font-size:16px}
+.rating-buttons{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin-top:12px}
+.rating-buttons button{background:#252532;border:1px solid #e50914;color:white;border-radius:12px;padding:8px 10px;font-size:16px}
+.rating-buttons button.active{background:#e50914}
+.empty-message{text-align:center;grid-column:1/-1;color:#ddd;font-size:18px;padding:30px}
+@media(max-width:600px){#animeList{grid-template-columns:1fr}.anime-img,.poster-fallback{height:230px}}
+
+.quick-stats{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:10px auto;padding:0 10px}
+.quick-stats span{background:#1c1c26;border:1px solid #333;border-radius:12px;padding:8px 12px;color:#ddd;font-size:14px}
+.badge{display:inline-block;background:#e50914;color:white;border-radius:10px;padding:4px 8px;font-size:12px;margin:3px}
+.card-actions{display:flex;justify-content:center;flex-wrap:wrap}
+.skeleton{background:linear-gradient(90deg,#1c1c26,#252532,#1c1c26);height:260px;border-radius:13px;animation:pulse 1.2s infinite}
+@keyframes pulse{0%{opacity:.55}50%{opacity:1}100%{opacity:.55}}
+
+</style>
+</head>
+<body>
+<h1>دليل الأنمي</h1>
+<input type="text" id="searchBox" placeholder="ابحث بأكثر من كلمة... مثال: Action Romance أو أكشن رومانسي">
+
+<div class="section-title">النوافذ الرئيسية</div>
+<div class="top-actions">
+<button onclick="showAllAnime()">عرض الكل</button>
+<button id="topButton" onclick="loadMode('top')">الأعلى تصنيفاً ⭐</button>
+<button id="popularButton" onclick="loadMode('popular')">الأكثر شعبية 👑</button>
+<button id="airingButton" onclick="loadMode('airing')">يعرض الآن 🔥</button>
+<button id="upcomingButton" onclick="loadMode('upcoming')">القادم قريباً 🆕</button>
+<button id="trendingButton" onclick="showTrendingNow()">الرائج حالياً 🔥</button>
+<button id="mostViewedButton" onclick="showMostViewed()">الأكثر مشاهدة 📈</button>
+<button id="favoritesButton" onclick="showFavorites()">المفضلة ❤️</button>
+<button id="laterButton" onclick="showWatchLater()">مشاهدة لاحقاً ⏰</button>
+<button id="randomButton" onclick="showRandomAnime()">اقتراح عشوائي 🎲</button>
+<button id="continueButton" onclick="showContinueWatching()">أكمل المشاهدة ▶️</button>
+<button id="hiddenButton" onclick="showHiddenAnime()">لا أريد مشاهدتها 🚫</button>
+</div>
+
+<div class="section-title">التصنيفات المتعددة</div>
+<div class="category-buttons">
+<button onclick="clearCategoryFilters()">الكل</button>
+<button onclick="toggleCategory('Action', this)">أكشن</button>
+<button onclick="toggleCategory('Adventure', this)">مغامرة</button>
+<button onclick="toggleCategory('Comedy', this)">كوميدي</button>
+<button onclick="toggleCategory('Drama', this)">دراما</button>
+<button onclick="toggleCategory('Fantasy', this)">فانتازيا</button>
+<button onclick="toggleCategory('Horror', this)">رعب</button>
+<button onclick="toggleCategory('Mystery', this)">غموض</button>
+<button onclick="toggleCategory('Romance', this)">رومانسي</button>
+<button onclick="toggleCategory('Sci-Fi', this)">خيال علمي</button>
+<button onclick="toggleCategory('Slice of Life', this)">شريحة من الحياة</button>
+<button onclick="toggleCategory('Sports', this)">رياضة</button>
+<button onclick="toggleCategory('Supernatural', this)">خارق للطبيعة</button>
+<button onclick="toggleCategory('Suspense', this)">تشويق</button>
+<button onclick="toggleCategory('Award Winning', this)">حائز جوائز</button>
+<button onclick="toggleCategory('Gourmet', this)">طبخ</button>
+<button onclick="toggleCategory('Avant Garde', this)">غرائبي</button>
+<button onclick="toggleCategory('Shounen', this)">شونين</button>
+<button onclick="toggleCategory('Shoujo', this)">شوجو</button>
+<button onclick="toggleCategory('Seinen', this)">سينين</button>
+<button onclick="toggleCategory('Josei', this)">جوسي</button>
+<button onclick="toggleCategory('Kids', this)">أطفال</button>
+<button onclick="toggleCategory('School', this)">مدرسي</button>
+<button onclick="toggleCategory('Isekai', this)">إيسيكاي</button>
+<button onclick="toggleCategory('Mecha', this)">ميكا</button>
+<button onclick="toggleCategory('Military', this)">عسكري</button>
+<button onclick="toggleCategory('Music', this)">موسيقى</button>
+<button onclick="toggleCategory('Psychological', this)">نفسي</button>
+<button onclick="toggleCategory('Historical', this)">تاريخي</button>
+<button onclick="toggleCategory('Gore', this)">دموي</button>
+<button onclick="toggleCategory('Delinquents', this)">عصابات</button>
+<button onclick="toggleCategory('Martial Arts', this)">فنون قتالية</button>
+<button onclick="toggleCategory('Vampire', this)">مصاص دماء</button>
+<button onclick="toggleCategory('Samurai', this)">ساموراي</button>
+<button onclick="toggleCategory('Detective', this)">تحقيق</button>
+<button onclick="toggleCategory('Survival', this)">نجاة</button>
+<button onclick="toggleCategory('Time Travel', this)">سفر عبر الزمن</button>
+<button onclick="toggleCategory(\'Magic\', this)">سحر</button><button onclick="toggleCategory(\'Demons\', this)">شياطين</button><button onclick="toggleCategory(\'Game\', this)">ألعاب</button><button onclick="toggleCategory(\'Space\', this)">فضاء</button><button onclick="toggleCategory(\'Harem\', this)">هاريم</button><button onclick="toggleCategory(\'Parody\', this)">محاكاة ساخرة</button><button onclick="toggleCategory(\'Police\', this)">شرطة</button><button onclick="toggleCategory(\'Medical\', this)">طب</button><button onclick="toggleCategory(\'Racing\', this)">سباق</button><button onclick="toggleCategory(\'Idols\', this)">آيدول</button><button onclick="toggleCategory(\'Iyashikei\', this)">هادئ</button></div>
+
+<p class="welcome">هذه النسخة تحمّل الأنميات تلقائياً عند الفتح، وتبدأ بقائمة احتياطية حتى لا تظهر شاشة بيضاء. تقدر تختار أكثر من تصنيف مع بعض، واضغط على صورة الأنمي للتفاصيل.</p>
+<div id="quickStats" class="quick-stats"><span>الأنميات: 0</span><span>المفضلة: 0</span><span>لاحقاً: 0</span></div>
+<div id="selectedLine">لا توجد تصنيفات محددة</div>
+<div id="statusLine">جاري تجهيز الأنميات...</div>
+<div id="animeList"></div>
+<div class="load-wrap">
+<button id="loadMoreBtn" onclick="loadMore()">تحميل المزيد من الأنميات</button>
+<button id="autoLoadBtn" onclick="autoLoadPages(10)">أضف 10 صفحات زيادة</button>
+</div>
+
+<div id="detailsModal" class="modal hidden"><div class="modal-content">
+<button class="close-btn" onclick="closeDetails()">×</button>
+<img id="detailsImage" src="">
+<h2 id="detailsTitle"></h2><p id="detailsCategory"></p><p id="detailsEpisodes"></p><p id="detailsStatus"></p><p id="detailsNextEpisode"></p><p id="detailsNextSeason"></p><p id="detailsPublicStats"></p><p id="detailsRating"></p><p id="detailsStory"></p>
+<h3>قيّم الأنمي عندك</h3><div id="ratingButtons" class="rating-buttons"></div>
+</div></div>
+
+<div id="watchModal" class="modal hidden"><div class="modal-content">
+<button class="close-btn" onclick="closeWatch()">×</button><h2 id="watchTitle">مصادر مشاهدة ومعلومات</h2><p style="color:#ddd;font-size:14px">الروابط لمصادر عامة/قانونية، والتوفر يختلف حسب البلد.</p><div id="watchLinksBox"></div>
+</div></div>
+
+<script>
+const API="https://api.jikan.moe/v4";
+const fallbackData=[{"id": "static-naruto", "title": "Naruto", "arabicTitle": "ناروتو", "category": "Action / Adventure / Shounen / أكشن / مغامرة / شونين", "episodes": "220 حلقة", "status": "مكتمل", "popularity": 97, "publicRating": 8.7, "publicViews": 2400000, "watchingNow": 12500, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/13/17405.jpg", "story": "قصة نينجا صغير يحلم أن يصبح الهوكاجي ويحصل على احترام قريته."}, {"id": "static-onepiece", "title": "One Piece", "arabicTitle": "ون بيس", "category": "Adventure / Shounen / Comedy / Action / مغامرة / شونين / كوميدي / أكشن", "episodes": "أكثر من 1000 حلقة", "status": "مستمر", "popularity": 100, "publicRating": 9.1, "publicViews": 4200000, "watchingNow": 26000, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/6/73245.jpg", "story": "لوفي ينطلق في رحلة ليصبح ملك القراصنة ويجد كنز الون بيس."}, {"id": "static-aot", "title": "Attack on Titan", "arabicTitle": "هجوم العمالقة", "category": "Action / Drama / Mystery / Gore / أكشن / دراما / غموض / دموي", "episodes": "4 مواسم", "status": "مكتمل", "popularity": 99, "publicRating": 9.2, "publicViews": 3200000, "watchingNow": 18000, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/10/47347.jpg", "story": "البشر يعيشون خلف أسوار ضخمة لحماية أنفسهم من العمالقة."}, {"id": "static-demonslayer", "title": "Demon Slayer", "arabicTitle": "قاتل الشياطين", "category": "Action / Fantasy / Shounen / Supernatural / أكشن / فانتازيا / شونين / خارق للطبيعة", "episodes": "عدة مواسم", "status": "يعرض الآن", "popularity": 98, "publicRating": 8.9, "publicViews": 2800000, "watchingNow": 22000, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/1286/99889.jpg", "story": "تانجيرو يحاول إنقاذ أخته بعد تحولها إلى شيطان."}, {"id": "static-deathnote", "title": "Death Note", "arabicTitle": "مذكرة الموت", "category": "Mystery / Psychological / Suspense / غموض / نفسي / تشويق", "episodes": "37 حلقة", "status": "مكتمل", "popularity": 94, "publicRating": 9.0, "publicViews": 1900000, "watchingNow": 7000, "trending": false, "image": "https://cdn.myanimelist.net/images/anime/9/9453.jpg", "story": "طالب يجد دفترًا غامضًا يستطيع قتل أي شخص يكتب اسمه فيه."}, {"id": "static-jujutsu", "title": "Jujutsu Kaisen", "arabicTitle": "جوجوتسو كايسن", "category": "Action / Shounen / Supernatural / أكشن / شونين / خارق للطبيعة", "episodes": "عدة مواسم", "status": "يعرض الآن", "popularity": 97, "publicRating": 8.7, "publicViews": 2300000, "watchingNow": 21000, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/1171/109222.jpg", "story": "يوجي يدخل عالم اللعنات بعد ابتلاع إصبع سوكونا."}, {"id": "static-tokyo", "title": "Tokyo Revengers", "arabicTitle": "طوكيو ريفنجرز", "category": "Action / Drama / School / Delinquents / أكشن / عصابات / دراما / مدرسي", "episodes": "عدة مواسم", "status": "مستمر", "popularity": 89, "publicRating": 8.1, "publicViews": 1150000, "watchingNow": 10500, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/1839/122012.jpg", "story": "تاكيميتشي يعود بالزمن لتغيير مستقبل عصابة طوكيو مانجي."}, {"id": "static-hxh", "title": "Hunter x Hunter", "arabicTitle": "هنتر x هنتر", "category": "Adventure / Shounen / Fantasy / مغامرة / شونين / فانتازيا", "episodes": "148 حلقة", "status": "مكتمل", "popularity": 96, "publicRating": 9.0, "publicViews": 2100000, "watchingNow": 9000, "trending": false, "image": "https://cdn.myanimelist.net/images/anime/1337/99013.jpg", "story": "غون يبدأ رحلة ليصبح صياداً ويبحث عن والده."}, {"id": "static-fma", "title": "Fullmetal Alchemist Brotherhood", "arabicTitle": "الخيميائي الفولاذي", "category": "Action / Adventure / Drama / Fantasy / أكشن / مغامرة / دراما / فانتازيا", "episodes": "64 حلقة", "status": "مكتمل", "popularity": 98, "publicRating": 9.1, "publicViews": 2000000, "watchingNow": 8500, "trending": false, "image": "https://cdn.myanimelist.net/images/anime/1208/94745.jpg", "story": "أخوان يبحثان عن حجر الفلاسفة بعد تجربة خيمياء فاشلة."}, {"id": "static-blue-lock", "title": "Blue Lock", "arabicTitle": "بلو لوك", "category": "Sports / Shounen / Psychological / رياضة / شونين / نفسي", "episodes": "عدة مواسم", "status": "يعرض الآن", "popularity": 90, "publicRating": 8.3, "publicViews": 1000000, "watchingNow": 14000, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/1258/126929.jpg", "story": "مشروع قاسٍ لصناعة أفضل مهاجم في اليابان."}, {"id": "static-solo", "title": "Solo Leveling", "arabicTitle": "سولو ليفلينغ", "category": "Action / Fantasy / أكشن / فانتازيا / قتال", "episodes": "موسم أول", "status": "مستمر", "popularity": 95, "publicRating": 8.7, "publicViews": 1200000, "watchingNow": 23000, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/1924/138460.jpg", "story": "صياد ضعيف يحصل على نظام يرفع مستواه بلا حدود."}, {"id": "static-frieren", "title": "Frieren", "arabicTitle": "فريرن", "category": "Adventure / Fantasy / Drama / مغامرة / فانتازيا / دراما", "episodes": "28 حلقة", "status": "مكتمل", "popularity": 96, "publicRating": 9.3, "publicViews": 1000000, "watchingNow": 13000, "trending": true, "image": "https://cdn.myanimelist.net/images/anime/1015/138006.jpg", "story": "ساحرة خالدة تتأمل معنى الذكريات بعد نهاية الرحلة."}];
+const manualSeasonInfo={"static-naruto": ("", "الأنمي مكتمل - لا توجد أخبار رسمية عن موسم جديد"), "static-onepiece": ("", "الأنمي مستمر - الحلقات مستمرة أسبوعياً"), "static-aot": ("", "الأنمي مكتمل - لا توجد أخبار رسمية عن موسم جديد"), "static-demonslayer": ("2026-07-01T20:00:00", "الموسم/الفيلم القادم متوقع لاحقاً عند إعلان رسمي"), "static-deathnote": ("", "الأنمي مكتمل - لا توجد أخبار رسمية عن موسم جديد"), "static-jujutsu": ("2026-01-01T20:00:00", "الموسم القادم قادم عند الإعلان الرسمي"), "static-tokyo": ("", "لا توجد أخبار مؤكدة عن موسم جديد حالياً"), "static-hxh": ("", "لا توجد أخبار رسمية عن موسم جديد حالياً"), "static-fma": ("", "الأنمي مكتمل - لا توجد أخبار رسمية عن موسم جديد"), "static-blue-lock": ("2026-10-01T20:00:00", "الموسم القادم عند توفر إعلان رسمي"), "static-solo": ("2026-01-01T20:00:00", "الموسم القادم عند توفر إعلان رسمي"), "static-frieren": ("2026-01-01T20:00:00", "موسم جديد معلن/متوقع عند توفر موعد رسمي")};
+function applySeasonDefaults(){
+  fallbackData.forEach(function(a){
+    const info = manualSeasonInfo[a.id];
+    if(info){
+      a.nextSeasonAt = info[0];
+      a.nextSeasonText = info[1];
+    }
+  });
+}
+applySeasonDefaults();
+
+let animeData=[...fallbackData], shownData=[...fallbackData], currentMode="top", currentPage=1, currentQuery="", selectedCategories=[], currentDetailsId=null;
+const animeList=document.getElementById("animeList"), searchBox=document.getElementById("searchBox"), statusLine=document.getElementById("statusLine"), selectedLine=document.getElementById("selectedLine");
+let favorites=JSON.parse(localStorage.getItem("favFullAuto"))||[], watchLater=JSON.parse(localStorage.getItem("laterFullAuto"))||[], hiddenAnime=JSON.parse(localStorage.getItem("hiddenFullAuto"))||[], ratings=JSON.parse(localStorage.getItem("ratingsFullAuto"))||{}, watchCounts=JSON.parse(localStorage.getItem("countsFullAuto"))||{};
+function saveData(){setTimeout(updateQuickStats,0);localStorage.setItem("favFullAuto",JSON.stringify(favorites));localStorage.setItem("laterFullAuto",JSON.stringify(watchLater));localStorage.setItem("hiddenFullAuto",JSON.stringify(hiddenAnime));localStorage.setItem("ratingsFullAuto",JSON.stringify(ratings));localStorage.setItem("countsFullAuto",JSON.stringify(watchCounts));}
+function isFavorite(id){return favorites.includes(id)} function isWatchLater(id){return watchLater.includes(id)} function isHidden(id){return hiddenAnime.includes(id)} function getRating(id){return ratings[id]||0} function getWatchCount(id){return watchCounts[id]||0}
+function formatNumber(n){if(!n)return"0"; if(n>=1000000)return(n/1000000).toFixed(1)+"M"; if(n>=1000)return(n/1000).toFixed(1)+"K"; return String(n)}
+function ratingText(id){let r=getRating(id);return r?"تقييمك: "+"⭐".repeat(r)+" ("+r+"/5)":"تقييمك: لم يتم التقييم بعد"}
+function normalizeAnime(item){let genres=[...(item.genres||[]),...(item.themes||[]),...(item.demographics||[])].map(g=>g.name).filter(Boolean);return {id:"mal-"+item.mal_id,title:item.title||"بدون اسم",arabicTitle:item.title_english||item.title||"بدون اسم",category:genres.join(" / ")||"غير محدد",episodes:item.episodes?item.episodes+" حلقة":"غير معروف",status:item.status||"غير معروف",popularity:item.popularity?Math.max(1,100-Math.min(99,Math.floor(item.popularity/100))):50,publicRating:item.score||0,publicViews:item.members||0,watchingNow:item.scored_by||0,trending:!!item.airing,nextEpisodeAt:'',nextSeasonAt:'',nextSeasonText:getNextSeasonText(item),image:item.images?.jpg?.large_image_url||item.images?.jpg?.image_url||"",story:item.synopsis||"لا توجد قصة متوفرة.",url:item.url||"#",trailer:item.trailer?.url||"",keywords:(item.title+" "+(item.title_english||"")+" "+genres.join(" ")).toLowerCase(),watchLinks:[{name:"صفحة MyAnimeList",url:item.url||"#"},{name:"Tubi - مجاني بإعلانات",url:"https://tubitv.com/category/anime"},{name:"Pluto TV - مجاني",url:"https://pluto.tv/"},{name:"RetroCrush - أنمي مجاني",url:"https://www.retrocrush.tv/"},{name:"YouTube Muse Asia",url:"https://www.youtube.com/c/MuseAsia"}]};}
+
+function getNextSeasonText(item){
+  if(!item) return "لا توجد أخبار مؤكدة عن موسم جديد حالياً";
+  const status = item.status || "";
+  if(status.includes("Finished")) return "الأنمي مكتمل - لا توجد أخبار رسمية عن موسم جديد";
+  if(status.includes("Currently")) return "الأنمي يعرض الآن - الحلقات مستمرة حسب جدول العرض";
+  if(status.includes("Not yet")) return "الأنمي قادم قريباً - لم يبدأ العرض بعد";
+  return "لا توجد أخبار مؤكدة عن موسم جديد حالياً";
+}
+
+function getSeasonCountdownText(nextSeasonAt, nextSeasonText, status){
+  if(nextSeasonAt){
+    const now = new Date();
+    const next = new Date(nextSeasonAt);
+    const diff = next - now;
+
+    if(diff > 0){
+      const minutesTotal = Math.floor(diff / 1000 / 60);
+      const days = Math.floor(minutesTotal / (60 * 24));
+      const hours = Math.floor((minutesTotal % (60 * 24)) / 60);
+      const minutes = minutesTotal % 60;
+      return "الموسم القادم بعد: " + days + " يوم / " + hours + " ساعة / " + minutes + " دقيقة";
+    }
+
+    return "موعد الموسم القادم وصل أو سيتم تحديثه قريباً";
+  }
+
+  if(nextSeasonText) return nextSeasonText;
+
+  if(status && (String(status).includes("Finished") || String(status).includes("مكتمل"))){
+    return "الأنمي مكتمل - لا توجد أخبار رسمية عن موسم جديد";
+  }
+
+  return "لا توجد أخبار مؤكدة عن موسم جديد حالياً";
+}
+
+function getEpisodeCountdownText(nextEpisodeAt, status){
+  if(status && (String(status).includes("Finished") || String(status).includes("مكتمل"))){
+    return "مكتمل - لا توجد حلقة قادمة";
+  }
+
+  if(!nextEpisodeAt) return "موعد الحلقة القادمة غير متوفر حالياً";
+
+  const now = new Date();
+  const next = new Date(nextEpisodeAt);
+  const diff = next - now;
+
+  if(diff <= 0) return "موعد الحلقة وصل أو الحلقة متاحة";
+
+  const minutesTotal = Math.floor(diff / 1000 / 60);
+  const days = Math.floor(minutesTotal / (60 * 24));
+  const hours = Math.floor((minutesTotal % (60 * 24)) / 60);
+  const minutes = minutesTotal % 60;
+
+  return "الحلقة القادمة بعد: " + days + " يوم / " + hours + " ساعة / " + minutes + " دقيقة";
+}
+
+function endpoint(mode,page){if(mode==="popular")return`${API}/top/anime?filter=bypopularity&page=${page}`;if(mode==="airing")return`${API}/seasons/now?page=${page}`;if(mode==="upcoming")return`${API}/seasons/upcoming?page=${page}`;if(mode==="search")return`${API}/anime?q=${encodeURIComponent(currentQuery)}&page=${page}&sfw=true`;return`${API}/top/anime?page=${page}`;}
+async function loadMode(mode){currentMode=mode;currentPage=1;currentQuery="";selectedCategories=[];searchBox.value="";clearActive();clearCategoryButtonStyles();setActive(mode);updateSelectedLine();statusLine.textContent="جاري جلب الأنميات من الإنترنت...";showLoadingCards();try{let res=await fetch(endpoint(mode,currentPage));if(!res.ok)throw new Error("bad");let json=await res.json();let apiList=(json.data||[]).map(normalizeAnime);animeData=mergeUnique(apiList,[...fallbackData]);shownData=[...animeData];statusLine.textContent="تم تحميل "+animeData.length+" أنمي. التحميل التلقائي مستمر...";applyLocal();autoLoadPages(10);}catch(e){animeData=[...fallbackData];shownData=[...animeData];statusLine.textContent="لم يعمل الجلب من الإنترنت، تم تشغيل القائمة الاحتياطية بدون شاشة بيضاء.";applyLocal();}}
+async function loadMore(){currentPage++;statusLine.textContent="جاري تحميل المزيد...";try{let res=await fetch(endpoint(currentMode,currentPage));if(!res.ok)throw new Error("bad");let json=await res.json();let more=(json.data||[]).map(normalizeAnime);animeData=mergeUnique(animeData,more);shownData=[...animeData];statusLine.textContent="صار عندك "+animeData.length+" أنمي داخل الصفحة.";applyLocal();}catch(e){currentPage--;statusLine.textContent="ما قدرنا نحمّل المزيد حالياً. القائمة الموجودة ستبقى شغالة.";}}
+async function autoLoadPages(n){for(let i=0;i<n;i++){await new Promise(r=>setTimeout(r,950));await loadMore();}}
+function mergeUnique(a,b){let map=new Map();[...a,...b].forEach(x=>map.set(x.id,x));return [...map.values()];}
+function fullText(a){return (a.title+" "+a.arabicTitle+" "+a.category+" "+a.episodes+" "+a.status+" "+a.keywords+" "+a.story).toLowerCase();}
+function imgBlock(a){return `<img class="anime-img" src="${a.image}" alt="${a.title}" onclick="showDetails('${a.id}')" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"><div class="poster-fallback" onclick="showDetails('${a.id}')">${a.arabicTitle}<br><small>${a.title}</small></div>`}
+function render(list=shownData,includeHidden=false){updateQuickStats();animeList.innerHTML="";let final=includeHidden?list:list.filter(a=>!isHidden(a.id));if(!final.length){animeList.innerHTML="<p class='empty-message'>لا توجد نتائج مطابقة</p>";return}final.forEach(a=>{let card=document.createElement("div");card.className="anime-card";let heart=isFavorite(a.id)?"❤️":"🤍",later=isWatchLater(a.id)?"✅":"⏰",hid=isHidden(a.id)?"↩️":"🚫";card.innerHTML=`<div class="floating-buttons"><button class="small-round ${isFavorite(a.id)?"active":""}" onclick="toggleFavorite('${a.id}')">${heart}</button><button class="small-round ${isWatchLater(a.id)?"active":""}" onclick="toggleWatchLater('${a.id}')">${later}</button><button class="small-round ${isHidden(a.id)?"active":""}" onclick="toggleHidden('${a.id}')">${hid}</button></div>${imgBlock(a)}<h2>${a.arabicTitle}</h2><p>${a.title}</p><p>${a.category}</p><p>${a.status}</p><p class="stats-line">مشاهدات/أعضاء: ${formatNumber(a.publicViews)} / تصنيف: ⭐ ${a.publicRating||"غير متوفر"}</p><p class="stats-line">مشاهداتك: ${getWatchCount(a.id)}</p><p class="rating-line">${ratingText(a.id)}</p><button onclick="showDetails('${a.id}')">تفاصيل</button><button onclick="showWatchLinks('${a.id}')">مشاهدة</button>`;animeList.appendChild(card);})}
+function findAnime(id){return animeData.find(a=>a.id===id)||fallbackData.find(a=>a.id===id)}
+function toggleFavorite(id){favorites=isFavorite(id)?favorites.filter(x=>x!==id):[...favorites,id];saveData();refresh();} function toggleWatchLater(id){watchLater=isWatchLater(id)?watchLater.filter(x=>x!==id):[...watchLater,id];saveData();refresh();} function toggleHidden(id){hiddenAnime=isHidden(id)?hiddenAnime.filter(x=>x!==id):[...hiddenAnime,id];saveData();refresh();}
+function setRating(id,r){ratings[id]=r;saveData();if(currentDetailsId===id){renderRatingButtons(id);document.getElementById("detailsRating").textContent=ratingText(id);}refresh();}
+function renderRatingButtons(id){let box=document.getElementById("ratingButtons");box.innerHTML="";for(let i=1;i<=5;i++){let b=document.createElement("button");b.textContent=i+" ⭐";b.className=getRating(id)===i?"active":"";b.onclick=()=>setRating(id,i);box.appendChild(b);}}
+function showDetails(id){let a=findAnime(id);currentDetailsId=id;let im=document.getElementById("detailsImage");im.src=a.image;im.style.display="block";im.onerror=function(){this.style.display="none"};document.getElementById("detailsTitle").textContent=a.arabicTitle+" - "+a.title;document.getElementById("detailsCategory").textContent="التصنيف: "+a.category;document.getElementById("detailsEpisodes").textContent="الحلقات: "+a.episodes;document.getElementById("detailsStatus").textContent="الحالة: "+a.status;document.getElementById("detailsNextEpisode").textContent=getEpisodeCountdownText(a.nextEpisodeAt, a.status);document.getElementById("detailsNextSeason").textContent=getSeasonCountdownText(a.nextSeasonAt, a.nextSeasonText, a.status);document.getElementById("detailsPublicStats").textContent="الشعبية: "+a.popularity+" / التصنيف العام: ⭐ "+(a.publicRating||"غير متوفر")+" / المشاهدات: "+formatNumber(a.publicViews);document.getElementById("detailsRating").textContent=ratingText(id);document.getElementById("detailsStory").textContent=a.story;renderRatingButtons(id);document.getElementById("detailsModal").classList.remove("hidden");}
+function closeDetails(){currentDetailsId=null;document.getElementById("detailsModal").classList.add("hidden");}
+function showWatchLinks(id){let a=findAnime(id);watchCounts[id]=getWatchCount(id)+1;saveData();document.getElementById("watchTitle").textContent="مصادر: "+a.arabicTitle;let box=document.getElementById("watchLinksBox");box.innerHTML="";let links=a.watchLinks||[];if(a.trailer)links=[{name:"Trailer",url:a.trailer},...links];links.forEach(l=>{if(l.url&&l.url!=="#")box.innerHTML+=`<a class="watch-link" href="${l.url}">${l.name}</a>`;});document.getElementById("watchModal").classList.remove("hidden");refresh();}
+function closeWatch(){document.getElementById("watchModal").classList.add("hidden");}
+function toggleCategory(cat, btn){if(selectedCategories.includes(cat)){selectedCategories=selectedCategories.filter(x=>x!==cat);btn.classList.remove("active");}else{selectedCategories.push(cat);btn.classList.add("active");}updateSelectedLine();applyLocal();}
+function clearCategoryFilters(){selectedCategories=[];clearCategoryButtonStyles();updateSelectedLine();applyLocal();}
+function updateSelectedLine(){selectedLine.textContent=selectedCategories.length?"التصنيفات المحددة: "+selectedCategories.join(" + "):"لا توجد تصنيفات محددة";}
+function applyLocal(){let data=[...animeData];let words=searchBox.value.toLowerCase().trim().split(" ").filter(Boolean);if(words.length)data=data.filter(a=>words.every(w=>fullText(a).includes(w)));if(selectedCategories.length)data=data.filter(a=>selectedCategories.every(c=>fullText(a).includes(c.toLowerCase())));shownData=data;render(shownData);updateQuickStats();}
+function showAllAnime(){currentMode="all";clearActive();shownData=[...animeData];render(shownData);updateQuickStats();}
+function showTrendingNow(){clearActive();document.getElementById("trendingButton").classList.add("active");render([...animeData].filter(a=>a.trending).sort((a,b)=>b.watchingNow-a.watchingNow));}
+function showMostViewed(){clearActive();document.getElementById("mostViewedButton").classList.add("active");render([...animeData].sort((a,b)=>b.publicViews-a.publicViews));}
+function showFavorites(){clearActive();document.getElementById("favoritesButton").classList.add("active");render(animeData.filter(a=>favorites.includes(a.id)));}
+function showWatchLater(){clearActive();document.getElementById("laterButton").classList.add("active");render(animeData.filter(a=>watchLater.includes(a.id)));}
+function showHiddenAnime(){clearActive();document.getElementById("hiddenButton").classList.add("active");render(animeData.filter(a=>hiddenAnime.includes(a.id)),true);}
+function refresh(){render(shownData);updateQuickStats();}
+function clearActive(){document.querySelectorAll(".top-actions button").forEach(b=>b.classList.remove("active"));}
+function clearCategoryButtonStyles(){document.querySelectorAll(".category-buttons button").forEach(b=>b.classList.remove("active"));}
+function setActive(mode){let id=mode==="top"?"topButton":mode==="popular"?"popularButton":mode==="airing"?"airingButton":mode==="upcoming"?"upcomingButton":"";if(id)document.getElementById(id).classList.add("active");}
+
+function updateQuickStats(){
+  const box = document.getElementById("quickStats");
+  if(!box) return;
+  box.innerHTML = `
+    <span>الأنميات المحملة: ${animeData.length}</span>
+    <span>المفضلة: ${favorites.length}</span>
+    <span>مشاهدة لاحقاً: ${watchLater.length}</span>
+    <span>المخفي: ${hiddenAnime.length}</span>
+  `;
+}
+
+function scrollToTop(){
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+function showLoadingCards(){
+  animeList.innerHTML = "";
+  for(let i=0;i<6;i++){
+    const card=document.createElement("div");
+    card.className="anime-card";
+    card.innerHTML="<div class='skeleton'></div><h2>جاري التحميل...</h2><p>انتظر قليلاً</p>";
+    animeList.appendChild(card);
+  }
+}
+
+function showRandomAnime(){
+  clearActive();
+  const available = animeData.filter(a => !isHidden(a.id));
+  if(!available.length){ render([]); return; }
+  const pick = available[Math.floor(Math.random()*available.length)];
+  render([pick]);
+  showDetails(pick.id);
+}
+
+function showContinueWatching(){
+  clearActive();
+  const ids = Object.keys(watchCounts).sort((a,b)=>watchCounts[b]-watchCounts[a]);
+  const list = ids.map(id => animeData.find(a=>a.id===id)).filter(Boolean);
+  render(list);
+}
+
+let timer=null;searchBox.addEventListener("input",()=>{clearTimeout(timer);timer=setTimeout(()=>applyLocal(),400);});
+shownData=[...animeData];statusLine.textContent="القائمة الاحتياطية ظهرت. التحميل التلقائي سيبدأ الآن...";render();loadMode("top");
+</script>
+</body>
+</html>
